@@ -2,7 +2,7 @@
 import math
 import numpy as np
 from scipy.interpolate import interp1d
-### Update: 22.10.24
+### Update: 22.10.31
 
 # read the file of spectrum
 def read(filename, skip1st =True):
