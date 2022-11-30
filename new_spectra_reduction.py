@@ -2,10 +2,19 @@
 import math
 import numpy as np
 from scipy.interpolate import interp1d
-### Update: 22.10.31
+### Update: 22.11.30
 
-# read the file of spectrum
 def read(filename, skip1st =True):
+    """The function for reading the file of spectrum
+
+    Args:
+        filename (string): The string of filename, for example, "yourFile.txt".
+        skip1st (bool, optional): Skip the first line or not. Defaults to True. If it is not necessary to skip, You must input False.
+
+    Returns:
+        wavelength (numpy array): The data of wavelength.
+        flux (numpy array): The data of flux.
+    """
     wavelength = []
     flux = []
 
@@ -28,8 +37,16 @@ def read(filename, skip1st =True):
 
     return wavelength, flux
 
-# do the calculation of smoothing WITHOUT varflux
 def raw_smooth(filenameOrArray, vexp):
+    """The function which can do the calculation of smoothing WITHOUT varflux
+
+    Args:
+        filenameOrArray (string or array): You can put the filename directly, also the array which contain wavelength and flux (e.g. [wave, flux]).
+        vexp (number): The value of smoothing factor.
+
+    Returns:
+        outflux (numpy array): The flux data which has been smoothed.
+    """
     if type(filenameOrArray) == str:
         # read file to get the raw data
         wavelength, flux = read(filenameOrArray, False)
@@ -50,7 +67,6 @@ def raw_smooth(filenameOrArray, vexp):
     for i in range(len(wavelength)):
 
         # first construct a Gaussian of sigma = vexp * wavelength[i] 
-        # gaussian = np.zeros(len(wavelength))
         sigma = v * wavelength[i]
 
         # restrict range to +/- nsig sigma (avoid floating underflow)
@@ -77,8 +93,16 @@ def raw_smooth(filenameOrArray, vexp):
 
     return outflux
 
-# calculate the variance flux
-def varflux(filenameOrArray):    
+def varflux(filenameOrArray):
+    """The function which can calculate the variance flux
+
+    Args:
+        filenameOrArray (string or array): You can put the filename directly, also the array which contain wavelength and flux (e.g. [wave, flux]).
+
+    Returns:
+        var_flux (numpy array): The simulated variance flux of inputted spectrum.
+        ratio (number): The simulated signal-to-noise ratio of inputted spectrum.
+    """
     if type(filenameOrArray) == str:
         # read the file
         wavelength, rawflux = read(filenameOrArray, False)
@@ -104,8 +128,17 @@ def varflux(filenameOrArray):
     
     return var_flux, ratio
 
-# do the calculation of smoothing with a customized vexp value
 def smooth(filenameOrArray, vexp, varflux):
+    """The function which can do the calculation of smoothing with a customized vexp value
+
+    Args:
+        filenameOrArray (string or array): You can put the filename directly, also the array which contain wavelength and flux (e.g. [wave, flux]).
+        vexp (number): The value of smoothing factor.
+        varflux (array): The simulated variance flux of spectrum.
+
+    Returns:
+        outflux (numpy array): The flux data which has been smoothed.
+    """
     if type(filenameOrArray) == str:
         # read file to get the raw data
         wavelength, flux = read(filenameOrArray, False)
@@ -158,8 +191,19 @@ def smooth(filenameOrArray, vexp, varflux):
 
     return outflux
 
-# do N sigma clipping
 def clip(filename, vexp, varflux, sig_num =5, loop_num =1):
+    """The function to removing outlier with N sigma clipping
+
+    Args:
+        filename (string): The string of filename, for example, "yourFile.txt".
+        vexp (number): The value of smoothing factor.
+        varflux (array): The simulated variance flux of spectrum.
+        sig_num (integer, optional): The value over than how many sigma will be removed. Defaults to 5.
+        loop_num (int, optional): How many times of sigma clipping you want to do. Defaults to 1.
+
+    Returns:
+        new_flux (numpy array): The flux data which has been clipped.
+    """
     wavelength, flux = read(filename, False)
     leng = len(wavelength);
     vf = varflux
@@ -187,8 +231,18 @@ def clip(filename, vexp, varflux, sig_num =5, loop_num =1):
 
     return new_flux
 
-# do smoothing by signal to noise ratio
 def snr_smooth(filenameOrArray, varflux, ratio):
+    """The function which can do smoothing by signal to noise ratio
+
+    Args:
+        filenameOrArray (string or array): You can put the filename directly, also the array which contain wavelength and flux (e.g. [wave, flux]).
+        varflux (array): The simulated variance flux of spectrum.
+        ratio (number): The simulated signal-to-noise ratio of spectrum.
+
+    Returns:
+        outflux (numpy array): The flux data which has been smoothed by suitable vexp.
+        vexp (number): The suitable smoothing factor of inputted spectrum.
+    """
     # global vexp
     
     # read the file
@@ -211,8 +265,24 @@ def snr_smooth(filenameOrArray, varflux, ratio):
     
     return outflux, vexp
 
-# calculate the velocity and error of silicon (main function)
 def velocity(filename, z =0, rest_line =6355, spec_range =[5945, 6285], error_loop =200):
+    """The main function of this file. It can calculate the velocity and error of line in spectrum.
+
+    Args:
+        filename (string): The string of filename, for example, "yourFile.txt".
+        z (number, optional): The value of redshift. Defaults to 0.
+        rest_line (integer, optional): The rest wavelength of line you want to measure. Defaults to 6355 (Si II).
+        spec_range (list, optional): The range of wavelength that you want to measure. Defaults to [5945, 6285] (Si II).
+        error_loop (integer, optional): How many loops of calculating the velocity error. Defaults to 200.
+
+    Returns:
+        outflux_line (numpy array): The smoothed flux in the wavelength range which you set.
+        velocity_line (number): The value of eject velocity of line in spectrum. Unit is km/s.
+        v_sigma (number): The value of velocity error of line in spectrum. Unit is km/s.
+        min_line (number): The value of minimum wavelength of line you measured.
+        min_flux (number): The value of minimum flux of line you measured.
+        vexp (number): The suitable smoothing factor of inputted spectrum.
+    """
     # input the raw data of spretra.flm
     raw_wavelength, raw_flux = read(filename, False)
     
@@ -270,4 +340,4 @@ def velocity(filename, z =0, rest_line =6355, spec_range =[5945, 6285], error_lo
     delta_lambda = (min_line/rest_line)-1
     velocity_line = (299792458*delta_lambda*0.001)
 
-    return outflux_line, velocity_line, v_sigma, min_line, min_flux, wavelength_line, flux_line, vexp
+    return outflux_line, velocity_line, v_sigma, min_line, min_flux, vexp
