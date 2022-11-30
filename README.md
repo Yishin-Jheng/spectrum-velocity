@@ -4,7 +4,7 @@ There are some functions for spectra reduction and velocity calculation.
 
 ## Functions in `new_spectra_reduction.py`
 
-- `read` - It can read the first two columns in text files (`.txt`, `.cvs` or `.fim` files), and pass the data into wavelength and flux array separately.
+- `read` - It can read the first two columns in text files (`.txt`, `.csv` or `.flm` files), and pass the data into wavelength and flux array separately.
 
 - `raw_smooth` - This kind of smoothing can be used when we don't obtain variance flux of spectrum yet. This function is written for `varflux` function.
 
